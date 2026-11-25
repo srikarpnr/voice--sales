@@ -1,12 +1,13 @@
 // OpenRouter: one key for the chat model (LLM_MODEL) and the embedding model (EMBED_MODEL).
 const API = 'https://openrouter.ai/api/v1';
 
-async function post(path, body, signal) {
+// A provider that stalls must not leave a live caller in silence, so every request has a deadline.
+async function post(path, body, { signal, timeoutMs }) {
   const send = () => fetch(API + path, {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    signal,
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
   });
   let res = await send();
   // One short wait covers a brief rate-limit burst during a tool-call round.
@@ -43,7 +44,7 @@ export async function streamChat({ messages, tools, signal, onText }) {
     stream: true,
     temperature: 0.4,
     max_tokens: 400,
-  }, signal);
+  }, { signal, timeoutMs: 20_000 });
 
   let content = '';
   const toolCalls = [];
@@ -74,12 +75,12 @@ export async function chatJson(messages) {
     response_format: { type: 'json_object' },
     temperature: 0.2,
     max_tokens: 800,
-  });
+  }, { timeoutMs: 45_000 });
   return JSON.parse((await res.json()).choices[0].message.content);
 }
 
 export async function embed(texts) {
-  const res = await post('/embeddings', { model: process.env.EMBED_MODEL, input: texts });
+  const res = await post('/embeddings', { model: process.env.EMBED_MODEL, input: texts }, { timeoutMs: 8_000 });
   const { data } = await res.json();
   return data.sort((a, b) => a.index - b.index).map((item) => item.embedding);
 }
