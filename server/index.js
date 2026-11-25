@@ -11,7 +11,7 @@ import { startCall } from './call.js';
 const REQUIRED_ENV = ['MONGODB_URI', 'JWT_SECRET', 'ADMIN_EMAIL', 'ADMIN_PASSWORD', 'GNANI_API_KEY', 'OPENROUTER_API_KEY', 'LLM_MODEL', 'EMBED_MODEL'];
 const missing = REQUIRED_ENV.filter((name) => !process.env[name]);
 if (missing.length) {
-  console.error(`Set these in .env first: ${missing.join(', ')}`);
+  console.error(`Missing environment variables (set them in .env or on the host): ${missing.join(', ')}`);
   process.exit(1);
 }
 
@@ -63,3 +63,11 @@ calls.on('connection', (ws, req) => {
 });
 
 server.listen(PORT, () => console.log(`Voice sales agent running at http://localhost:${PORT}`));
+
+// shortcut: Render's free plan sleeps after 15 idle minutes; pinging our own public URL every
+// 10 minutes keeps the demo awake for a few days. Remove this on a paid plan.
+if (process.env.RENDER_EXTERNAL_URL) {
+  setInterval(() => {
+    fetch(process.env.RENDER_EXTERNAL_URL).catch((err) => console.error('Keep-awake ping failed:', err.message));
+  }, 10 * 60_000);
+}
