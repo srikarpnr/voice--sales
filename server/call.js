@@ -11,7 +11,7 @@ const MAX_TOOL_ROUNDS = 4;
 const STT_FRAME_BYTES = 1024;
 // A transcript of the agent's own voice can arrive this long after its audio stopped (VAD silence + STT time).
 const ECHO_WINDOW_MS = 2500;
-const GREETING_CUE = '[The call has just connected. Greet the lead by name, say you are an AI assistant calling from the company, give the reason for the call in one sentence, and ask for two minutes.]';
+const GREETING_CUE = '[The call has just connected. In English, greet the lead by name, say you are an AI assistant calling from the company, give the reason for the call in one sentence, and ask for two minutes.]';
 const LIVE_TOOLS = new Set(['update_lead', 'book_meeting']);
 // A lookup costs one more model round trip; a short phrase covers the silence.
 const SLOW_TOOLS = new Set(['search_knowledge', 'check_slots', 'book_meeting']);
